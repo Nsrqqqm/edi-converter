@@ -1,0 +1,40 @@
+J Polep Invoice Format: (A B C Records)
+
+Example Data for A record:
+AJPOLEP1234567890072408-000000800
+
+Breakdown of data:
+A = Record type
+JPOLEP = Wholesaler
+1234567890 = Invoice
+072408 = Invoice Date
+- = Sign (- if negative, 0 if positive)
+000000800 = Invoice Amount ($8.00)
+
+
+Example Data for B record:
+B00000857458MUFFIN LRG 6Z CHOC CHIP  857458000000  000004-000100005001
+
+Breakdown of data:
+B = Record Type
+00000857458 = UPC
+MUFFIN LRG 6Z CHOC CHIP  = Description
+857458 = Item Number (Vendor Code)
+000000 = Cost
+PK = Shipper Flag ('PK' if used OR 2 blanks if not used)
+000004 = Pack
+- = sign (0 if positive, - if negative)
+0001 = qty
+00005 = retail (000.05)
+001 = filler
+
+
+Example Data for C record:
+C123ABCDEFGHIJKLMNOPQRSTUVWXYZFF-23456789
+
+Breakdown of data:
+C = record type
+123 = Charge Type
+ABCDEFGHIJKLMNOPQRSTUVWXY = Charge Description
+- = Sign ('0' if positive or '-' if negative)
+23456789 = Charge Amount

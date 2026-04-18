@@ -1,63 +1,77 @@
-# PDF → EDI Converter
+# PDF → EDI Converter (Next.js)
 
-A Streamlit web app that scans any vendor PDF invoice and generates a fixed-width EDI file.
+Next.js port of the Streamlit app. Uses **Google Gemini 2.5 Flash** to extract
+invoice data from any vendor PDF and generate a fixed-width EDI file. Designed
+to deploy to **Vercel** as a single project.
 
-## How it works
+## Features
 
-Upload a PDF invoice. The app extracts the text, parses it universally (no vendor-specific config needed), and outputs a fixed-width EDI file ready for import.
+- Single and bulk PDF upload with drag-and-drop
+- Gemini-powered extraction — handles any vendor layout, including scanned PDFs
+- Invoice preview (vendor, invoice #, date, totals, line items)
+- Fixed-width EDI output (A / B / C records), identical format to the Python
+  version
+- Download single EDI file or a ZIP of all bulk results
 
-**Extraction pipeline:**
-1. `pdfplumber` — fast text extraction for digital PDFs
-2. `pytesseract` OCR — fallback for scanned/image-based PDFs (requires Tesseract installed)
+## Local development
 
-**Vendor detection** is automatic — the app reads the company name from the document header and derives a 6-character vendor code. No vendor list to maintain.
+```bash
+cd web
+cp .env.local.example .env.local
+# edit .env.local and set GEMINI_API_KEY
+npm install
+npm run dev
+```
+
+Open http://localhost:3000.
+
+## Deploy to Vercel
+
+1. Push this repo to GitHub.
+2. In the Vercel dashboard, **Import Project** and select the repo.
+3. Set the **Root Directory** to `web`.
+4. Framework preset: Next.js (auto-detected).
+5. Under **Environment Variables**, add:
+   - `GEMINI_API_KEY` = your key from https://aistudio.google.com/apikey
+6. Deploy.
+
+### Notes on limits
+
+- Vercel serverless functions have a **4.5 MB request body limit** by default.
+  Most vendor invoices fit comfortably, but very large scanned PDFs may be
+  rejected. If this becomes an issue, upload directly to the Gemini Files API
+  from the client instead of routing bytes through the serverless function.
+- The `/api/convert` route is configured with `maxDuration = 60` seconds.
+  Vercel Hobby caps at 60s, Pro allows up to 300s.
 
 ## EDI Format
 
 ```
-A{vendor:9}{invoice:7}{MMDDYY:6}{amount:10}
-B{code:6}{qty:5}{desc:25}{upc:12}  {seq:6}{amount:13}
-C{desc:28}{amount:9}
+A{vendor:9}{inv:7}{MMDDYY:6}{amt:10}
+B{code:6}{qty:5}{desc:25}{upc:12}  {seq:6}{amt:13}
+C{desc:28}{amt:9}
 ```
 
-- `A` — invoice header (vendor, invoice number, date, total)
-- `B` — one record per line item (item code, qty, description, UPC, net amount)
-- `C` — taxes and fees (only emitted when taxes > 0)
+Amounts are sign character + zero-padded cents, no decimal point
+(e.g. `$194.09` → `-000019409`).
 
-Amounts are sign + zero-padded cents with no decimal point (e.g. `$194.09` → `-000019409`).
+## Project layout
 
-## Installation
-
-```bash
-pip install -r requirements.txt
 ```
-
-**Optional: OCR support for scanned PDFs**
-
-```bash
-# macOS
-brew install tesseract poppler
-
-# Ubuntu / Debian
-apt-get install tesseract-ocr poppler-utils
+web/
+├── app/
+│   ├── api/convert/route.ts    POST endpoint: PDF → Gemini → EDI
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/
+│   ├── Dropzone.tsx            Drag-and-drop file input
+│   ├── InvoiceDisplay.tsx      Parsed invoice card + items table + EDI pre
+│   └── UploadApp.tsx           Tabs + single/bulk flows
+├── lib/
+│   ├── edi.ts                  EDI generator (ported from app.py)
+│   ├── gemini.ts               Gemini extraction with typed JSON schema
+│   └── types.ts                Invoice / LineItem / ConvertResponse types
+├── package.json
+└── tsconfig.json
 ```
-
-## Run
-
-```bash
-streamlit run app.py
-```
-
-Open `http://localhost:8501` in your browser.
-
-## Features
-
-- Single file and bulk upload modes
-- Bulk export downloads all EDI files as a ZIP
-- Parsed invoice preview (vendor, invoice number, date, total, line items)
-- Raw extracted text viewer for debugging
-
-## Requirements
-
-- Python 3.8+
-- See `requirements.txt`
