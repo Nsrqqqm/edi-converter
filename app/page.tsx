@@ -20,9 +20,9 @@ export default function Home() {
           EDI Format
         </h2>
         <pre className="mt-3 overflow-x-auto font-mono text-xs">
-{`A{vendor:9}{inv:7}{MMDDYY:6}{amt:10}
-B{code:6}{qty:5}{desc:25}{upc:12}  {seq:6}{amt:13}
-C{desc:28}{amt:9}`}
+{`A{vendor:6}{inv:10}{MMDDYY:6}{sign:1}{amt:9}
+B{upc:11}{desc:25}{itemcode:6}{cost:6}{shipperflag:2}{pack:6}{sign:1}{qty:4}{retail:5}{filler:3}
+C{chargetype:3}{desc:25}{sign:1}{amt:8}`}
         </pre>
         <p className="mt-3 text-xs text-gray-500">
           Amounts = sign character + zero-padded cents, no decimal point.
