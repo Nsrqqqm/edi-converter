@@ -9,14 +9,12 @@ to deploy to **Vercel** as a single project.
 - Single and bulk PDF upload with drag-and-drop
 - Gemini-powered extraction — handles any vendor layout, including scanned PDFs
 - Invoice preview (vendor, invoice #, date, totals, line items)
-- Fixed-width EDI output (A / B / C records), identical format to the Python
-  version
+- Fixed-width EDI output (A / B / C records) in ABC / J.Polep format
 - Download single EDI file or a ZIP of all bulk results
 
 ## Local development
 
 ```bash
-cd web
 cp .env.local.example .env.local
 # edit .env.local and set GEMINI_API_KEY
 npm install
@@ -29,8 +27,7 @@ Open http://localhost:3000.
 
 1. Push this repo to GitHub.
 2. In the Vercel dashboard, **Import Project** and select the repo.
-3. Set the **Root Directory** to `web`.
-4. Framework preset: Next.js (auto-detected).
+3. Framework preset: Next.js (auto-detected).
 5. Under **Environment Variables**, add:
    - `GEMINI_API_KEY` = your key from https://aistudio.google.com/apikey
 6. Deploy.
@@ -44,21 +41,20 @@ Open http://localhost:3000.
 - The `/api/convert` route is configured with `maxDuration = 60` seconds.
   Vercel Hobby caps at 60s, Pro allows up to 300s.
 
-## EDI Format
+## EDI Format (ABC / J.Polep)
 
 ```
-A{vendor:9}{inv:7}{MMDDYY:6}{amt:10}
-B{code:6}{qty:5}{desc:25}{upc:12}  {seq:6}{amt:13}
-C{desc:28}{amt:9}
+A{vendor:6}{inv:10}{MMDDYY:6}{sign:1}{amt:9}
+B{upc:11}{desc:25}{itemcode:6}{cost:6}{shipperflag:2}{pack:6}{sign:1}{qty:4}{retail:5}{filler:3}
+C{chargetype:3}{desc:25}{sign:1}{amt:8}
 ```
 
-Amounts are sign character + zero-padded cents, no decimal point
+Amounts are sign character (`-`) + zero-padded cents, no decimal point
 (e.g. `$194.09` → `-000019409`).
 
 ## Project layout
 
 ```
-web/
 ├── app/
 │   ├── api/convert/route.ts    POST endpoint: PDF → Gemini → EDI
 │   ├── globals.css
@@ -69,7 +65,7 @@ web/
 │   ├── InvoiceDisplay.tsx      Parsed invoice card + items table + EDI pre
 │   └── UploadApp.tsx           Tabs + single/bulk flows
 ├── lib/
-│   ├── edi.ts                  EDI generator (ported from app.py)
+│   ├── edi.ts                  EDI generator (ABC / J.Polep format)
 │   ├── gemini.ts               Gemini extraction with typed JSON schema
 │   └── types.ts                Invoice / LineItem / ConvertResponse types
 ├── package.json
